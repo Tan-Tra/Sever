@@ -1,0 +1,8 @@
+﻿cl : command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
+  ServerDlg.cpp
+C:\Users\HP\Desktop\Server\Server\ServerDlg.cpp(117,2): warning C4996: 'wcstombs': This function or variable may be unsafe. Consider using wcstombs_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\HP\Desktop\Server\Server\ServerDlg.cpp(161,11): warning C4996: 'WSAAsyncSelect': Use WSAEventSelect() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+C:\Users\HP\Desktop\Server\Server\ServerDlg.cpp(234,8): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\HP\Desktop\Server\Server\ServerDlg.cpp(348,8): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\HP\Desktop\Server\Server\ServerDlg.cpp(401,5): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  Server.vcxproj -> C:\Users\HP\Desktop\Server\Debug\Server.exe
