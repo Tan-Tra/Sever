@@ -27,6 +27,7 @@ void CServerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_BOXCHAT, m_msgString);
 	DDX_Text(pDX, IDC_MANAGE, m_Manage);
 	DDX_Text(pDX, IDC_ONLINE, m_Online);
+	DDX_Control(pDX, IDC_LISTCLIENT, m_listClient);
 }
 
 BEGIN_MESSAGE_MAP(CServerDlg, CDialog)
@@ -234,13 +235,26 @@ LRESULT CServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 				Command += _T("\r\n");
 				m_msgString += strResult[1] + _T(" login\r\n");
 
-				m_Online += pSock[number_Socket].Name;//cập nhật tên client vừa đăng nhập vào danh sách các client đang onl
-				m_Online += _T("\r\n");
+				CString name(mes1);
+				m_listClient.AddString(name);//cập nhật tên client vừa đăng nhập vào danh sách các client đang onl
+
 				number_Socket++;//tăng số lượng client
 				UpdateData(FALSE);
+				//gửi cho các Client khác biết có người mới đăng nhập
 				for (int i = 0; i < number_Socket; i++)
 				{
 					mSend(pSock[i].sockClient, Command);
+				}
+				
+				//gửi tên người dùng vừa đăng nhập để Client cập nhật vào danh sách online phía Client
+
+				for (int i = 0; i < number_Socket-1; i++)
+				{
+					CString name_onl(pSock[i].Name);
+					Command = _T("5\r\n0\r\n");
+					Command += name_onl;
+					Command += _T("\r\n");
+					mSend(wParam, Command);
 				}
 			}
 			else
@@ -248,13 +262,6 @@ LRESULT CServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 				Command = _T("1\r\n0\r\n");
 				Command += _T("\r\n");
 				mSend(wParam, Command);
-			}
-
-			Command = _T("5\r\n");
-			Command += m_Online;
-			for (int i = 0; i < number_Socket; i++)
-			{
-				mSend(pSock[i].sockClient, Command);
 			}
 			UpdateData(FALSE);
 			break;
@@ -294,16 +301,28 @@ LRESULT CServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 				Command += _T("\r\n");
 				m_msgString += strResult[1] + _T(" login\r\n");
 
-				m_Online += pSock[number_Socket].Name;//cập nhật tên client vừa đăng nhập vào danh sách các client đang onl
-				m_Online += _T("\r\n");
+				CString name(mes1);
+				m_listClient.AddString(name);//cập nhật tên client vừa đăng nhập vào danh sách các client đang onl
+
 				number_Socket++;//tăng số lượng client
 				UpdateData(FALSE);
+				//gửi cho các Client khác biết có người mới đăng nhập
 				for (int i = 0; i < number_Socket; i++)
 				{
 					mSend(pSock[i].sockClient, Command);
 				}
-			}
 
+				
+				//gửi tên người dùng vừa đăng nhập để Client cập nhật vào danh sách online phía Client
+				for (int i = 0; i < number_Socket; i++)
+				{
+					CString name_onl(pSock[i].Name);
+					Command = _T("5\r\n0\r\n");
+					Command += name_onl;
+					Command += _T("\r\n");
+					mSend(pSock[number_Socket - 1].sockClient, Command);
+				}
+			}
 			UpdateData(FALSE);
 		}break;
 
@@ -346,21 +365,27 @@ LRESULT CServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 						mSend(pSock[i].sockClient, Command);
 				}
 
-				//Xóa tên client ra khỏi danh sách client online
-				CString temp(pSock[post].Name);
-				//temp += _T("\r\n");
-				int pos = m_Online.FindOneOf(temp);
-				m_Online.Delete(pos, temp.GetLength() + 2);
-
-				Command = _T("5\r\n");
-				Command += m_Online;
+				int int_index;
+				//Xóa tên client ra khỏi danh sách client online của Server 
+	
+				CString name_tmp(pSock[post].Name);
+				int_index = m_listClient.FindStringExact(0, name_tmp);
+				m_listClient.DeleteString(int_index);
+		
+				
+				//Cập nhật thông tin cho Client để cập nhật danh sách onl phía Client
+				Command = _T("5\r\n1\r\n");
+				CString index;
+				index.Format(_T("%d"), int_index);
+				Command += index;
 				Command += _T("\r\n");
-				for (int i = 0; i < number_Socket; i++)
+				for (int i = 0; i < number_Socket; i++)//gửi cho từng client
 				{
-					if (i != pos)
+					if (pSock[i].sockClient != wParam)
+					{
 						mSend(pSock[i].sockClient, Command);
+					}
 				}
-
 				closesocket(wParam);
 				//loại bỏ thông tin socket đã đóng ra khỏi mảng
 				for (int j = post; j < number_Socket - 1; j++)
@@ -372,6 +397,37 @@ LRESULT CServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 
 				UpdateData(FALSE);
 			}
+		}break;
+		case 6:
+		{
+			int post = -1;
+			for (int i = 0; i < number_Socket; i++)
+			{
+				if (pSock[i].sockClient == wParam)
+				{
+					if (i < number_Socket)
+						post = i;
+				}
+			}
+			m_msgString += _T("Pr from ");
+			m_msgString += pSock[post].Name;
+			m_msgString += _T(" to ");
+			CString parner(strResult[1]);
+			CString msg(strResult[2]);
+			m_msgString += parner + _T(": ") + msg;
+			m_msgString += _T("\r\n");
+			UpdateData(FALSE);
+			Command = _T("6\r\n");
+			Command += pSock[post].Name;
+			Command += _T("\r\n");
+			Command += msg + _T("\r\n");
+			/*for (int i = 0; i < number_Socket; i++)
+			{
+				if (pSock[i].Name == parner)
+				{
+					mSend(pSock[i].sockClient, Command);
+				}
+			}*/
 		}break;
 		}break;
 	}
@@ -401,18 +457,24 @@ LRESULT CServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 			if (i != post)
 				mSend(pSock[i].sockClient, Command);
 		}
+		int int_index;
 		//Xóa tên client ra khỏi danh sách client online
-		CString temp(pSock[post].Name);
-		int pos = m_Online.FindOneOf(temp);
-		m_Online.Delete(pos, temp.GetLength() + 2);
+		CString name_tmp(pSock[post].Name);
+		int_index = m_listClient.FindStringExact(0, name_tmp);
+		m_listClient.DeleteString(int_index);
 
-		Command = _T("5\r\n");
-		Command += m_Online;
+		//Cập nhật thông tin cho Client để cập nhật danh sách onl phía Client
+		Command = _T("5\r\n1\r\n");
+		CString index;
+		index.Format(_T("%d"), int_index);
+		Command += index;
 		Command += _T("\r\n");
-		for (int i = 0; i < number_Socket; i++)
+		for (int i = 0; i < number_Socket; i++)//gửi cho từng client
 		{
-			if (i != pos)
+			if (pSock[i].sockClient != wParam)
+			{
 				mSend(pSock[i].sockClient, Command);
+			}
 		}
 		closesocket(wParam);
 		for (int j = post; j < number_Socket - 1; j++)
@@ -532,7 +594,5 @@ int CServerDlg::loadData()
 	file.close();
 	return 1;
 }
-
-
 
 

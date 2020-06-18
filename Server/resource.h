@@ -11,8 +11,8 @@
 #define IDC_LIST                        1002
 #define IDC_BOXCHAT                     1003
 #define IDC_LIST1                       1004
-#define IDC_BOXCHAT2                    1004
 #define IDC_ONLINE                      1004
+#define IDC_LISTCLIENT                  1004
 #define IDC_MANAGE                      1005
 #define IDC_RADIO1                      1006
 

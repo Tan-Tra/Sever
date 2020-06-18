@@ -73,4 +73,6 @@ public:
 	afx_msg void OnEnChangeEdit2();
 	CString m_Manage;//lưu tất cả tên người dùng
 	CString m_Online;// lưu những người đang online
+	afx_msg void OnLbnSelchangeListclient();
+	CListBox m_listClient;
 };
